@@ -11,7 +11,7 @@ Tengo varias cosas pensadas con este selfbot una de ellas es traducirlo al ingle
 
 <h3> Donaciones </h3>
 
-Si por algun casual os da por donarme, por ahora solo acepto XMR (monero) y tokens de BAT (Brave brawser) a futoro mirare de aceptar mas metodos:
+Si por algun casual os da por donarme, por ahora solo acepto XMR (monero) a futoro mirare de aceptar mas metodos:
 
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
 
@@ -31,6 +31,6 @@ I have several ideas for this selfbot. One of them is translating it into Englis
 
 ## Donations
 
-If you feel like donating, for now, I only accept XMR (Monero) and BAT tokens (Brave Browser). In the future, I may consider accepting more methods:
+If you feel like donating, for now, I only accept XMR (Monero). In the future, I may consider accepting more methods:
 
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
