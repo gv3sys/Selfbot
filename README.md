@@ -14,6 +14,7 @@ Tengo varias cosas pensadas con este selfbot una de ellas es traducirlo al ingle
 Si por algun casual os da por donarme, por ahora solo acepto XMR (monero) y tokens de BAT (Brave brawser) a futoro mirare de aceptar mas metodos:
 
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Selfbot
