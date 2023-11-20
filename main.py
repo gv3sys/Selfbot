@@ -147,12 +147,12 @@ async def purge(ctx, limit: int):
 
 @bot.command()
 async def spam(ctx, times: int, *, message: str):
-    """Spamea un mensaje varias veces con un retraso de 2 segundos entre cada mensaje."""
+    """Spamea un mensaje varias veces con un retraso de 0.2 segundos entre cada mensaje."""
     await ctx.message.delete()
 
     for i in range(times):
         await ctx.send(message)
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.2)
 
 @bot.command(aliases=["hypersquad"])
 async def hs(ctx, house: str):
