@@ -63,7 +63,7 @@ async def on_message(message):
 async def on_ready():
     # Cambia la presencia del bot para mostrar un estado de transmisión
     await bot.change_presence(activity=discord.Streaming(
-        name='Nonymus Selfbot', url='https://discord.gg/ZP8BtpDy'))
+        name='UPDMTLD', url='https://www.youtube.com/watch?v=2Sj_UygVjMI'))
 
     # Imprime un mensaje indicando que el bot ha iniciado sesión correctamente
     print(f"{Fore.YELLOW}Has iniciado como {Fore.RED}{bot.user}")
@@ -426,34 +426,52 @@ async def stats(ctx):
     # Use psutil to get CPU and memory information
     cpu_cores = psutil.cpu_count(logical=False)
     ram_info = psutil.virtual_memory()
+    cpu_info = platform.processor()
 
     # Calculate uptime in seconds
     uptime_seconds = round(time.time() - start_time)
     uptime_str = str(datetime.timedelta(seconds=uptime_seconds))
 
     stats = (f"```\n"
+             f"***********************************************************************************\n"
              f"Versión de Python: {python_version}\n"
              f"Versión de Discord.py: {discord_version}\n"
              f"Sistema Operativo: {os_platform} {platform.release()}\n"
+             f"***********************************************************************************\n"
              f"Estoy en: {guild_count} servidores\n"
-             f"Cantidad de miembros: {member_count}\n"
+             f"***********************************************************************************\n"
+             f"Tipo de CPU: {cpu_info}\n"
              f"Cantidad de núcleos de CPU: {cpu_cores}\n"
+             f"Cantidad de RAM total: {ram_info.total / (1024 ** 3):.2f} GB\n"  # Convertir bytes a gigabytes
              f"Uso de memoria: {ram_info.percent}%\n"
              f"Tiempo de actividad: {uptime_str}\n"
+             f"***********************************************************************************\n"
+
              f"```")
     await ctx.send(stats)
 
 
 @bot.command()
-async def av(ctx, *, user: discord.Member = None):
+async def av(ctx, user_id: int = None):
     """
-    Comando para mostrar el avatar de un usuario.
+    Comando para mostrar el avatar de un usuario por su ID (no funciona el @).
     """
     await ctx.message.delete()
-    user = user or ctx.author
+
+    if user_id is None:
+        user = ctx.author
+    else:
+        try:
+            user = await bot.fetch_user(user_id)
+        except discord.errors.NotFound:
+            return await ctx.send(f"No se pudo encontrar un usuario con el ID {user_id}.")
+
     format = "gif" if user.is_avatar_animated() else "png"
-    file = discord.File(await user.avatar_url_as(format=format).read(), filename=f"Avatar.{format}")
-    await ctx.send(file=file)
+    avatar_url = user.avatar_url_as(format=format)
+
+    await ctx.send(f"Avatar de <@{user.id}>")
+    await ctx.send(avatar_url)
+
 
 
 @bot.command(aliases=["rekt", "nuke"])
@@ -598,7 +616,6 @@ async def rename_channel(ctx, *, name=None):
     if name is None:
         await ctx.send("¡Error! Debes proporcionar un nombre para el canal.")
         return
-
     try:
         await ctx.channel.edit(name=name)
         await ctx.send(f"El nombre del canal ha sido cambiado a: {name}")
@@ -618,8 +635,6 @@ async def rnsv(ctx, *, name=None):
         )
         return
     await ctx.guild.edit(name=name)
-
-
 
 @bot.command() #mass react with an emoji
 async def massrc(ctx, quantity=None, emote=None):
