@@ -3,7 +3,7 @@ Este es mi selfbot de discord hecho para mis tonteria varias, sed libres de clon
 
 <h1> Librerias necesarias  </h1>
 
-En este caso necesitarias discord.py en la version 1.7.3, colorama, aiohttp y openai (para la ia, por defecto usa chat-gpt3.5-turbo)
+En este caso necesitarias discord.py en la version 1.7.3, colorama, aiohttp, openai (para la ia, por defecto usa chat-gpt3.5-turbo) y numpy
 
 <h2> Futuro del proyecto</h2>
 
@@ -23,7 +23,7 @@ This is my Discord selfbot created for my various nonsense. Feel free to clone t
 
 ## Necessary Libraries
 
-In this case, you would need discord.py version 1.7.3, colorama, aiohttp, and openai (for the AI, it defaults to using chat-gpt3.5-turbo).
+In this case, you would need discord.py version 1.7.3, colorama, aiohttp, openai (for the AI, it defaults to using chat-gpt3.5-turbo) and numpy.
 
 ## Future of the Project
 
