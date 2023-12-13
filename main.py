@@ -14,7 +14,7 @@ import contextlib
 from pathlib import Path
 import platform
 import subprocess
-import sys
+import sys´
 
 # Importaciones específicas de bibliotecas externas
 import aiohttp
@@ -63,7 +63,7 @@ async def on_message(message):
 async def on_ready():
     # Cambia la presencia del bot para mostrar un estado de transmisión
     await bot.change_presence(activity=discord.Streaming(
-        name='UPDMTLD', url='https://www.youtube.com/watch?v=2Sj_UygVjMI'))
+        name='UPDMTLD', url='https://discord.gg/XQp9TTh3'))
 
     # Imprime un mensaje indicando que el bot ha iniciado sesión correctamente
     print(f"{Fore.YELLOW}Has iniciado como {Fore.RED}{bot.user}")
