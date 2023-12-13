@@ -34,3 +34,5 @@ I have several ideas for this selfbot. One of them is translating it into Englis
 If you feel like donating, for now, I only accept XMR (Monero). In the future, I may consider accepting more methods:
 
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
+
+Contributors: https://github.com/InfiniteVoid-lab
