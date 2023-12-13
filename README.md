@@ -15,6 +15,8 @@ Si por algun casual os da por donarme, por ahora solo acepto XMR (monero) a futo
 
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
 
+Contrivuidor: https://github.com/InfiniteVoid-lab
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Selfbot
