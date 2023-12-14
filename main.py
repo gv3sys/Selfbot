@@ -15,7 +15,7 @@ from pathlib import Path
 import platform
 import subprocess
 import sys´
-
+import string
 # Importaciones específicas de bibliotecas externas
 import aiohttp
 import colorama
@@ -70,8 +70,6 @@ async def on_ready():
 
 # Elimina el comando predeterminado "help" para personalizarlo
 bot.remove_command("help")
-
-import string
 
 @bot.command()
 async def help(ctx): 
