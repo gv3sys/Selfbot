@@ -1,0 +1,71 @@
+Aquí tienes las instrucciones actualizadas con información sobre el uso de Docker en Linux:
+
+
+Instrucciones para usar el selfbot EN WINDOWS :
+
+1. Archivo token.txt:
+   - Este archivo es esencial para el funcionamiento del Selfbot de Discord.
+   - Debe colocar su token de Discord en este archivo.
+   - Sin el token en este archivo, el Selfbot no funcionará correctamente.
+
+2. Archivo token_open.txt:
+   - Este archivo es para el token de OpenAI, que no es necesario para el funcionamiento básico del Selfbot de Discord.
+   - Puede colocar su token de OpenAI en este archivo si desea utilizar funciones que requieran la API de OpenAI.
+   - No es necesario para las funciones básicas del Selfbot de Discord.
+
+3. Archivo status:
+   - Si utiliza el comando !stream, el Selfbot tomará la lista de estados de streaming de este archivo.
+   - Los estados de streaming deben ser proporcionados uno seguido del otro, separados por ";".
+   - Puede incluir espacios en los estados siempre que estén separados por ";".
+   - Por ejemplo: "Jugando a Minecraft;Transmitiendo en Twitch;Viendo una película".
+
+Pasos para comenzar:
+1. Complete el archivo token.txt con su token de Discord.
+2. Si planea utilizar la funcionalidad de OpenAI, complete el archivo token_open.txt con su token de OpenAI.
+3. Si desea configurar estados de streaming, edite el archivo status y agregue los estados separados por ";".
+4. Ejecute el archivo requirements_install.bat para instalar todas las dependencias necesarias.
+5. Una vez que se completen las instalaciones, verá un mensaje de finalización.
+6. Finalmente, ejecute el archivo run.bat para iniciar el Selfbot.
+
+########################################################################################################################################################################################################################################
+
+Instrucciones para usar el selfbot en Linux:
+
+1. Archivo token.txt:
+   - Este archivo es esencial para el funcionamiento del Selfbot de Discord.
+   - Debe colocar su token de Discord en este archivo.
+   - Sin el token en este archivo, el Selfbot no funcionará correctamente.
+
+2. Archivo token_open.txt:
+   - Este archivo es para el token de OpenAI, que no es necesario para el funcionamiento básico del Selfbot de Discord.
+   - Puede colocar su token de OpenAI en este archivo si desea utilizar funciones que requieran la API de OpenAI.
+   - No es necesario para las funciones básicas del Selfbot de Discord.
+
+3. Archivo status:
+   - Si utiliza el comando !stream, el Selfbot tomará la lista de estados de streaming de este archivo.
+   - Los estados de streaming deben ser proporcionados uno seguido del otro, separados por ";".
+   - Puede incluir espacios en los estados siempre que estén separados por ";".
+   - Por ejemplo: "Jugando a Minecraft;Transmitiendo en Twitch;Viendo una película".
+
+Pasos para comenzar:
+1. Complete el archivo token.txt con su token de Discord.
+2. Si planea utilizar la funcionalidad de OpenAI, complete el archivo token_open.txt con su token de OpenAI.
+3. Si desea configurar estados de streaming, edite el archivo status y agregue los estados separados por ";".
+4. Ejecute el archivo requirements_install.sh para instalar todas las dependencias necesarias.
+5. Una vez que se completen las instalaciones, verá un mensaje de finalización.
+6. Finalmente, ejecute el archivo run.sh para iniciar el Selfbot.
+
+########################################################################################################################################################################################################################################
+
+
+Nota sobre Docker:
+- Se proporciona un Dockerfile para facilitar la implementación del Selfbot en un entorno de contenedor Docker.
+- El Dockerfile está diseñado para funcionar en sistemas Linux y no ha sido probado en Windows.
+- Si desea utilizar Docker en Linux:
+  1. Asegúrese de tener Docker instalado en su sistema.
+  2. Construya la imagen Docker ejecutando el comando: 
+     docker build -t selfbot_discord .
+  3. Una vez que se complete la construcción de la imagen, puede ejecutar el contenedor con el siguiente comando:
+     docker run -d --name selfbot selfbot_discord (el -d es para que se ejecute de fondo si lo haces sin -d en cuanto cierres la terminal se cerrar el selfbot) 
+
+Estas instrucciones adicionales proporcionan una guía básica sobre cómo usar Docker para ejecutar el Selfbot en un entorno Linux, junto con la creación de una imagen Docker personalizada y la ejecución del contenedor.
