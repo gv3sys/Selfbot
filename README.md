@@ -19,6 +19,8 @@ XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC
 
 Contribuidor: https://github.com/InfiniteVoid-lab
 
+Mi servidor de discord para seguimiento o para cualquier duda: https://discord.gg/HCSpxuCwNR
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Selfbot
@@ -42,3 +44,5 @@ If by any chance you feel like donating to me, for now, I only accept XMR (Moner
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
 
 Contributor: https://github.com/InfiniteVoid-lab
+
+My discord server: https://discord.gg/HCSpxuCwNR
