@@ -1,40 +1,44 @@
 # Selfbot
-Este es mi selfbot de discord hecho para mis tonteria varias, sed libres de clonar la repo o hacerles fork o usarlos en vuestros projecto, pero lo menos darme credito por ello, no suelo ser muy activo para actualizarlo, teniendo en cuenta que la ultima vez que añadi algo fue hace un año, pero bueno como se puede ver en las notas de actualizacion he añadido nuevas cosas reducido y optimizado codigo en la medida y corregido bugs
+Un poco de historia: esto comenzó como un programa tonto para hacer alguna tontería o automatizar cosas y así empezar a programar en algún lenguaje de programación. Esto se puede ver en las primeras versiones, donde había muchas funciones tontas. Aparte de eso, ni siquiera me lo tomaba en serio. Con el tiempo, pasé el código a un amigo que es colaborador de este proyecto, y le gustó que tenía "cosas guapas", pero que el código estaba muy mal hecho y que había muchas cosas que no se aprovechaban, como librerías innecesarias que nunca se usaban. También mencionó que la interfaz no era muy intuitiva, ya que ni siquiera había un comando de ayuda. Entonces, comencé a tomármelo más en serio, y aquí estamos. La última versión creo que añade cosas bastante chulas, y tengo muchas otras ideas para añadir, pero no es fácil ya que soy el único que programa.
 
-<h1> Librerias necesarias  </h1>
+<h1> Librerías necesarias  </h1>
 
-En este caso necesitarias discord.py en la version 1.7.3, colorama, aiohttp, openai (para la ia, por defecto usa chat-gpt3.5-turbo), numpy, psuti, requests
+En este caso, necesitarías discord.py en la versión 1.7.3, colorama, aiohttp, openai (para la IA, por defecto usa chat-gpt3.5-turbo), numpy, psutil y requests.
+
+Aunque ahora ya está automatizado el proceso para instalarlo y no tenéis que hacerlo de forma manual.
 
 <h2> Futuro del proyecto</h2>
 
-Tengo varias cosas pensadas con este selfbot una de ellas es traducirlo al ingles que es la que se me viene a la caveza, tambien teneia pensado meter comandos de moderacion, estilo ban, kick y mute pero eso me esta dando problemas con la API de discord, tambien tengo pensado añadir la opcion para que te puedas añadir alias customs a los comandos de discrod, hacer que el token de discord no se tenga que almacenar dentro del codigo de python y tambien añadir mas comando que ya vere 
+Tengo varias ideas con este selfbot. Una de ellas es traducirlo al inglés, que es la que se me viene a la cabeza. También tenía pensado agregar comandos de moderación, como ban, kick y mute, pero eso me está dando problemas con la API de Discord. Además, tengo pensado añadir la opción para que te puedas añadir alias personalizados a los comandos de Discord y Python, así como añadir más comandos que ya veré.
 
 <h3> Donaciones </h3>
 
-Si por algun casual os da por donarme, por ahora solo acepto XMR (monero) a futoro mirare de aceptar mas metodos:
+Si por algún casual os da por donarme, por ahora solo acepto XMR (monero). En el futuro, miraré de aceptar más métodos:
 
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
 
-Contrivuidor: https://github.com/InfiniteVoid-lab
+Contribuidor: https://github.com/InfiniteVoid-lab
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Selfbot
 
-This is my Discord selfbot created for my various nonsense. Feel free to clone the repo, fork it, or use it in your projects, but please give credit where it's due. I'm not very active in updating it, considering the last time I added something was a year ago. However, as seen in the update notes, I've added new things, reduced and optimized code where possible, and fixed bugs.
+A bit of history: this started as a silly program to do some silly things or automate stuff and thus start programming in some programming language. This can be seen in the early versions, where there were many silly functions. Besides, I didn't even take it seriously. Over time, I handed the code to a friend who is a contributor to this project, and he liked that it had "cool stuff," but the code was very poorly done and there were many things that were not being taken advantage of, like unnecessary libraries that were never used. He also mentioned that the interface wasn't very intuitive, as there wasn't even a help command. So, I started taking it more seriously, and here we are. The latest version I think adds some pretty cool stuff, and I have many other ideas to add, but it's not easy since I'm the only one programming.
 
 ## Necessary Libraries
 
-In this case, you would need discord.py version 1.7.3, colorama, aiohttp, openai (for the AI, it defaults to using chat-gpt3.5-turbo), numpy, psutil and requests
+InIn this case, you would need discord.py in version 1.7.3, colorama, aiohttp, openai (for the AI, it defaults to using chat-gpt3.5-turbo), numpy, psutil, and requests.
+
+Although now the process to install it is automated and you don't have to do it manually.
 
 ## Future of the Project
 
-I have several ideas for this selfbot. One of them is translating it into English, which is the first thing that comes to mind. I also intended to include moderation commands, like ban, kick, and mute, but I'm facing issues with the Discord API. I'm also planning to add the option to create custom aliases for Discord commands, make the Discord token not stored within the Python code, and add more commands, which I'll decide later.
+I have several ideas for this selfbot. One of them is to translate it into English, which is the one that comes to mind. I also planned to add moderation commands, like ban, kick, and mute, but that's giving me trouble with the Discord API. Additionally, I plan to add the option for you to add custom aliases to Discord and Python commands, as well as adding more commands that I'll see later.
 
 ## Donations
 
-If you feel like donating, for now, I only accept XMR (Monero). In the future, I may consider accepting more methods:
+If by any chance you feel like donating to me, for now, I only accept XMR (Monero). In the future, I will look into accepting more methods:
 
 XMR: 85wZXWMx82aRW27KM3sxmtPzpwyrNmGpcLUnDbP858snB1uj28unYXUKnsvA7Tg2fPU4RymZciC7CXVUhMifxfHpBFB6mkx
 
-Contributors: https://github.com/InfiniteVoid-lab
+Contributor: https://github.com/InfiniteVoid-lab
