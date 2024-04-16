@@ -1,4 +1,4 @@
-# Importaciones necesarias
+# Importaciones esenciales
 import asyncio
 import datetime
 import io
@@ -14,34 +14,68 @@ import contextlib
 from pathlib import Path
 import platform
 import subprocess
-import sys´
+import sys
+import shlex
 import string
 # Importaciones específicas de bibliotecas externas
 import aiohttp
 import colorama
 import discord
+import pyfiglet
 import numpy
 import openai
 import psutil
 import requests
 from colorama import Fore
 from discord import Permissions
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import get
 from contextlib import redirect_stdout
+from openai import AsyncOpenAI
 
 # Tiempo de inicio del bot
 start_time = time.time()
 
-# Clave de la API de OpenAI 
-openai.api_key = ""
+# Función para leer el token de Discord desde un archivo de texto
+def read_discord_token(filename):
+    with open(filename, "r") as file:
+        return file.read().strip()
+
+# Función para leer la clave de la API de OpenAI desde un archivo de texto
+def read_openai_token(filename):
+    with open(filename, "r") as file:
+        return file.read().strip()
+
+# Función para leer los estados desde un archivo de texto
+def read_statuses(filename):
+    with open(filename, "r") as file:
+        return file.read().strip().split(';')
 
 # Definición del token de Discord
-TOKEN = ""
+TOKEN = read_discord_token("token.txt")
+
+# Definición del archivo que contiene los estados
+STATUS_FILE = "status.txt"
+
+# Clave de la API de OpenAI
+OPENAI_API_KEY = read_openai_token("token_open.txt")
+# Configura el modelo de OpenAI que deseas utilizar
+
+# Definición del archivo que contiene los estados
+STATUS_FILE = "status.txt"
+
+# Inicializa el cliente de
+openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
+# URL base de la API de OpenAI
+OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 
 # Función para limpiar la consola
 def clear():
     os.system("cls")
+
+# Creación del bot con el prefijo y la configuración del self_bot
+bot = commands.Bot(command_prefix=("!"), self_bot=True)
 
 # Configuración del token
 token = TOKEN
@@ -49,30 +83,19 @@ token = TOKEN
 # Variable para controlar si el bot está en modo ping
 ping = False
 
-# Creación del bot con el prefijo y la configuración del self_bot
-bot = commands.Bot(command_prefix=("!"), self_bot=True)
-
 # Evento que se dispara cada vez que se recibe un mensaje
 @bot.event
 async def on_message(message):
     # Procesa los comandos del mensaje
     await bot.process_commands(message)
 
-# Evento que se dispara cuando el bot está listo para funcionar
-@bot.event
-async def on_ready():
-    # Cambia la presencia del bot para mostrar un estado de transmisión
-    await bot.change_presence(activity=discord.Streaming(
-        name='UPDMTLD', url='https://discord.gg/XQp9TTh3'))
-
     # Imprime un mensaje indicando que el bot ha iniciado sesión correctamente
     print(f"{Fore.YELLOW}Has iniciado como {Fore.RED}{bot.user}")
 
 # Elimina el comando predeterminado "help" para personalizarlo
 bot.remove_command("help")
-
 @bot.command()
-async def help(ctx): 
+async def help(ctx):
     """El comando de ayuda xd"""
     # Obtiene la lista de comandos ordenados alfabéticamente por nombre
     sorted_commands = sorted(bot.commands, key=lambda x: x.name)
@@ -94,28 +117,53 @@ async def help(ctx):
 
 @bot.command()
 async def ia(ctx, *, message: str):
+    """Interactua con GPT-3.5-turbo, requiere el token de openai """
+    # Genera una respuesta utilizando OpenAI
+    completion = await openai_client.chat.completions.create(
+        model="gpt-3.5-turbo-0125",
+        messages=[{"role": "user", "content": message}]
+    )
+
+    # Verifica si hay una respuesta en la lista de choices
+    if completion.choices:
+        response = completion.choices[0].message.content
+    else:
+        response = "No response"
+
+    # Envía la respuesta al canal de Discord
+    await ctx.send(response)
+
+# Función para cambiar el estado del bot
+async def change_status():
+    statuses = read_statuses(STATUS_FILE)
+    status = random.choice(statuses)
+    await bot.change_presence(activity=discord.Streaming(name=status, url="http://www.twitch.tv/tu_stream"))
+
+@bot.command()
+async def stream(ctx, tiempo: int):
     """
-    Command para interactuar con la API de OpenAI.
+    Empieza a cambiar el texto de tu stream
     """
-    await ctx.message.delete()  # Delete the user's message
-    try:
-        # Request a completion from OpenAI
-        response = openai.Completion.create(
-            engine="gpt-3.5-turbo",  # Replace with the correct model name if different
-            prompt=message,
-            temperature=0.7,
-            max_tokens=150,
-        )
+    global intervalo_segundos
+    global change_status_task
 
-        # Send the generated response to the channel
-        await ctx.send(response.choices[0].text)
+    intervalo_segundos = tiempo
+    change_status_task = tasks.loop(seconds=intervalo_segundos)(change_status)
+    change_status_task.start()
+    await ctx.send(f"Cambiando el estado cada {tiempo} segundos.")
 
-    except Exception as e:
-        # Handle errors and inform the user
-        await ctx.send(f"There was an error processing the request to OpenAI! Details: {str(e)}")
-
-
-        
+# Comando para detener el cambio de estado
+@bot.command()
+async def stream_stop(ctx):
+    """
+    Para el comando !stream
+    """
+    global change_status_task
+    if change_status_task and change_status_task.is_running():
+        change_status_task.cancel()
+        await ctx.send("Cambio de estado detenido.")
+    else:
+        await ctx.send("El cambio de estado ya se ha detenido o nunca se ha iniciado.")
 @bot.command()
 async def purge(ctx, limit: int):
     """Purga mensajes, funciona con !purge (numero de mensajes a eliminar)"""
@@ -126,7 +174,7 @@ async def purge(ctx, limit: int):
     if isinstance(ctx.channel, discord.TextChannel):
         # Utiliza el método purge para eliminar mensajes en un canal de texto
         messages = await ctx.channel.purge(limit=limit + 1)
-        
+
         # Espera 1 segundo antes de enviar el siguiente mensaje
         await asyncio.sleep(1)
 
@@ -145,7 +193,7 @@ async def purge(ctx, limit: int):
 
 @bot.command()
 async def spam(ctx, times: int, *, message: str):
-    """Spamea un mensaje varias veces con un retraso de 0.2 segundos entre cada mensaje."""
+    """Manda un mensaje una cantidad de veces indicada (numero de veces "mensaje") con un retraso de 0.2 segundos entre cada mensaje"""
     await ctx.message.delete()
 
     for i in range(times):
@@ -154,11 +202,7 @@ async def spam(ctx, times: int, *, message: str):
 
 @bot.command(aliases=["hypersquad"])
 async def hs(ctx, house: str):
-    """Cambia la afiliación de HypeSquad de un usuario a la casa especificada.
-
-    Parameters:
-    - house (str): El nombre de la casa a la que se cambiará la afiliación (Bravery, Brilliance, o Balance).
-    """
+    """Cambia la afiliación de HypeSquad de un usuario a la casa especificada. (Bravery, Brilliance, o Balance)."""
     await ctx.message.delete()
     headers = {'Authorization': token, 'Content-Type': 'application/json'}
     house_id = {
@@ -178,14 +222,14 @@ async def hs(ctx, house: str):
                                  headers=headers,
                                  json=payload)
         response.raise_for_status()
-        
+
         # Obtén el nombre de la casa a la que se cambió
         house_name = {
             1: "Bravery",
             2: "Brilliance",
             3: "Balance"
         }.get(house_id, "Desconocida")
-        
+
         await ctx.send(f"Has cambiado a `{house_name}` correctamente!", delete_after=5)
     except requests.exceptions.HTTPError as e:
         error = e.response.json()
@@ -202,96 +246,96 @@ async def ping(ctx):
 
 @bot.command(aliases=["9/11", "911", "terrorist"])
 async def nine_eleven(ctx):
-    """Recrea ciertos evento historico...."""
+    """Recrea ciertos evento historico (11 de septiembre)...."""
     await ctx.message.delete()
     invis = ""  # char(173)
     message = await ctx.send(f'''
-{invis}:man_wearing_turban::airplane:    :office:           
+{invis}:man_wearing_turban::airplane:    :office:
 ''')
     await asyncio.sleep(0.5)
     await message.edit(content=f'''
-{invis} :man_wearing_turban::airplane:   :office:           
+{invis} :man_wearing_turban::airplane:   :office:
 ''')
     await asyncio.sleep(0.5)
     await message.edit(content=f'''
-{invis}  :man_wearing_turban::airplane:  :office:           
+{invis}  :man_wearing_turban::airplane:  :office:
 ''')
     await asyncio.sleep(0.5)
     await message.edit(content=f'''
-{invis}   :man_wearing_turban::airplane: :office:           
+{invis}   :man_wearing_turban::airplane: :office:
 ''')
     await asyncio.sleep(0.5)
     await message.edit(content=f'''
-{invis}    :man_wearing_turban::airplane::office:           
+{invis}    :man_wearing_turban::airplane::office:
 ''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
-        :boom::boom::boom:     
+        :boom::boom::boom:
 ''')
 
 
 @bot.command(aliases=["jerkoff", "ejaculate", "orgasm"], description="Un poco de troleo también.")
 async def cum(ctx):
-    """Un poco de troleo también."""
+    """Haz una animacion de que te estas masturbando."""
     await ctx.message.delete()
     message = await ctx.send('''
             :ok_hand:            :smile:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
-                 :zap: 8=:punch:=D 
+                 :zap: 8=:punch:=D
              :trumpet:      :eggplant:''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
                       :ok_hand:            :smiley:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
-                 :zap: 8==:punch:D 
-             :trumpet:      :eggplant:  
+                 :zap: 8==:punch:D
+             :trumpet:      :eggplant:
      ''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
                       :ok_hand:            :grimacing:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
-                 :zap: 8=:punch:=D 
-             :trumpet:      :eggplant:  
+                 :zap: 8=:punch:=D
+             :trumpet:      :eggplant:
      ''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
                       :ok_hand:            :persevere:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
-                 :zap: 8==:punch:D 
-             :trumpet:      :eggplant:   
+                 :zap: 8==:punch:D
+             :trumpet:      :eggplant:
      ''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
                       :ok_hand:            :confounded:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
-                 :zap: 8=:punch:=D 
-             :trumpet:      :eggplant: 
+                 :zap: 8=:punch:=D
+             :trumpet:      :eggplant:
      ''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
                        :ok_hand:            :tired_face:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
-                 :zap: 8==:punch:D 
-             :trumpet:      :eggplant:    
+                 :zap: 8==:punch:D
+             :trumpet:      :eggplant:
              ''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
                        :ok_hand:            :weary:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
                  :zap: 8=:punch:= D:sweat_drops:
-             :trumpet:      :eggplant:        
+             :trumpet:      :eggplant:
      ''')
     await asyncio.sleep(0.5)
     await message.edit(content='''
                        :ok_hand:            :dizzy_face:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
                  :zap: 8==:punch:D :sweat_drops:
              :trumpet:      :eggplant:                 :sweat_drops:
@@ -299,7 +343,7 @@ async def cum(ctx):
     await asyncio.sleep(0.5)
     await message.edit(content='''
                        :ok_hand:            :drooling_face:
-   :eggplant: :zzz: :necktie: :eggplant: 
+   :eggplant: :zzz: :necktie: :eggplant:
                    :oil:     :nose:
                  :zap: 8==:punch:D :sweat_drops:
              :trumpet:      :eggplant:                 :sweat_drops:
@@ -312,34 +356,9 @@ async def clear(ctx):
     await ctx.message.delete()
     await ctx.send('ﾠﾠ' + '\n' * 400 + 'ﾠﾠ')
 
-
-@bot.command(description="Envía un discurso de Armstrong en español.")
-async def ams(ctx):
-    """Envía un discurso de Armstrong en español."""
-    await ctx.message.delete()
-    await ctx.send("Tengo un sueño. Que un día cada persona de esta nación controle su propio destino. Una nación verdaderamente libre, maldita sea. Una nación de acción, no de palabras, gobernada por la fuerza, no por un comité. Donde la ley cambie para adaptarse al individuo, y no al revés. Donde el poder y la justicia vuelvan a estar donde deben estar: en manos del pueblo. ¡Donde cada hombre es libre de pensar - de actuar - por sí mismo! Que se jodan todos estos abogados de pacotilla y burócratas de mierda. ¡A la mierda con este montón de trivialidades y de mierda de los famosos que hay en Internet las 24 horas del día! ¡Que se joda el orgullo americano! ¡A LA MIERDA los medios de comunicación! ¡QUE SE JODA TODO! América está enferma. Podrido hasta la médula. No hay forma de salvarlo, tenemos que arrancarlo de raíz. Hacer borrón y cuenta nueva. ¡QUEMARLO! Y de las cenizas, nacerá una nueva América. Evolucionada, pero indómita. Los débiles serán purgados y los más fuertes prosperarán - libres de vivir como les parezca, ¡harán que América sea grande de nuevo!... ¡En mi nueva América, la gente morirá y matará por lo que cree! No por dinero. ¡No por petróleo! No por lo que se les dice que es correcto. ¡Cada hombre será libre de luchar en sus propias guerras!")
-
-@bot.command(description="Sends an Armstrong speech in English.")
-async def am(ctx):
-    """Sends an Armstrong speech in English."""
-    await ctx.message.delete()
-    await ctx.send("I have a dream. That one day every person in this nation will control their own destiny. A nation of the truly free, dammit. A nation of action, not words, ruled by strength, not committee! Where the law changes to suit the individual, not the other way around. Where power and justice are back where they belong: in the hands of the people! Where every man is free to think - to act - for himself! FUCK all these limp-dick lawyers and chickenshit bureaucrats. FUCK this 24-hour Internet spew of trivia and celebrity bullshit! FUCK American pride! FUCK the media! FUCK ALL OF IT! America is diseased. Rotten to the core. There's no saving it - we need to pull it out by the roots. WIpe the slate clean. BURN IT DOWN! And from the ashes, a new America will be born. Evolved, but untamed! The weak will be purged, and the strongest will thrive -- free to live as they see fit, they will make America GREAT AGAIN!")
-
-@bot.command(description="Sends the second part of Armstrong's speech.")
-async def am2(ctx):
-    """Sends the second part of Armstrong's speech."""
-    await ctx.message.delete()
-    await ctx.send("I do need capital. And votes. Wanna know why? I have a dream. That one day, every person in this nation will control their OWN destiny. A land of the TRULY free, dammit. A nation of ACTION, not words. Ruled by STRENGTH, not committee. Where the law changes to suit the individual, not the other way around. Where power and justice are back where they belong: in the hands of the people! Where every man is free to think -- to act -- for himself! Fuck all these limp-dick lawyers and chicken-shit bureaucrats. Fuck this 24/7 Internet spew of trivia and celebrity bullshit. Fuck American pride. Fuck the media! Fuck all of it! America is diseased. Rotten to the core. There's no saving it -- we need to pull it out by the roots. WIpe the slate clean. BURN IT DOWN! And from the ashes, a new America will be born. Evolved, but untamed! The weak will be purged, and the strongest will thrive -- free to live as they see fit, they will make America GREAT AGAIN!")
-
-@bot.command(description="Envía la segunda parte del discurso de Armstrong en español.")
-async def am2s(ctx):
-    """Envía la segunda parte del discurso de Armstrong en español."""
-    await ctx.message.delete()
-    await ctx.send("Necesito capital. Y votos. ¿Quieres saber por qué? Tengo un sueño. Que un día, cada persona de esta nación controle su propio destino. Una tierra verdaderamente libre, maldita sea. Una nación de acción, no de palabras. Gobernada por la FUERZA, no por un comité. Donde la ley cambia para adaptarse al individuo, y no al revés. Donde el poder y la justicia vuelven a estar donde deben estar: ¡en manos del pueblo! Donde cada hombre es libre de pensar - de actuar - por sí mismo. Que se jodan todos estos abogados de pacotilla y burócratas de mierda. Que se joda este vomitar de trivialidades y de mierda de las celebridades en Internet las 24 horas del día. Que se joda el orgullo americano. Que se jodan los medios de comunicación. Que les den a todos. América está enferma. Podrido hasta la médula. No hay forma de salvarlo. Tenemos que arrancarlo de raíz. Hacer borrón y cuenta nueva. ¡QUEMARLO! Y de las cenizas")
-
 @bot.command(description="Envía un mensaje a todos los canales de texto en el servidor.")
 async def sendall(ctx, *, message):
-    """Envía un mensaje a todos los canales de texto en el servidor."""
+    """Envía un mensaje a todos los canales de texto del servidor."""
     await ctx.message.delete()
     author = ctx.author
 
@@ -377,40 +396,9 @@ async def sendall(ctx, *, message):
         await ctx.send(f"El mensaje no se pudo enviar a los siguientes canales:\n\n{', '.join(failed_to)}")
 
 @bot.command()
-async def ithastobe(ctx):
-    """
-    Enviar la letra de 'It Has To Be This Way'.
-    """
-    lyrics = [
-        "Standing here",
-        "I realize",
-        "You are just like me",
-        "Trying to make history",
-        "But who's to judge",
-        "The right from wrong?",
-        "When our guard is down",
-        "I think we'll both agree",
-        "That violence breeds violence",
-        "But in the end it has to be this way",
-        "I've carved my own path",
-        "You followed your wrath",
-        "But maybe we're both the same",
-        "The world has turned",
-        "And so many have burned",
-        "But nobody is to blame",
-        "Yet staring across this barren wasted land",
-        "I feel new life will be born",
-        "Beneath the blood stained sand"
-    ]
-
-    for line in lyrics:
-        await ctx.send(line)
-        await asyncio.sleep(1.5) if line != "But in the end it has to be this way" else await asyncio.sleep(6)
-
-@bot.command()
 async def stats(ctx):
     """
-    Comando para mostrar estadísticas del selfbot.
+    Comando para mostrar estadísticas del equipo y selfbot.
     """
     await ctx.message.delete()
 
@@ -448,11 +436,10 @@ async def stats(ctx):
              f"```")
     await ctx.send(stats)
 
-
 @bot.command()
 async def av(ctx, user_id: int = None):
     """
-    Comando para mostrar el avatar de un usuario por su ID (no funciona el @).
+    Obten la foto de perfil de un usuario usando el ID (no funciona el @).
     """
     await ctx.message.delete()
 
@@ -470,14 +457,12 @@ async def av(ctx, user_id: int = None):
     await ctx.send(f"Avatar de <@{user.id}>")
     await ctx.send(avatar_url)
 
-
-
 @bot.command(aliases=["rekt", "nuke"])
 async def destroy(ctx, verification_code: int = None):
     """
-    Comando para realizar un ataque a gran escala en el servidor, tienes que poner
+    Borra todos los roles y canales de un server y crea 250 canales y roles llamado raid
     """
-    await ctx.message.delete()    
+    await ctx.message.delete()
     random_number = random.randint(1000, 9999)
     confirm_message = await ctx.send(f"Para confirmar la acción, escribe el siguiente número aleatorio de 4 dígitos: `{random_number}`. Escribe 'si' seguido del número para continuar o cualquier otra cosa para cancelar.")
 
@@ -490,27 +475,20 @@ async def destroy(ctx, verification_code: int = None):
         await confirm_message.edit(content="Tiempo de espera agotado. Acción cancelada.")
         return
 
-    # Banear a todos los miembros del servidor
-    for user in list(ctx.guild.members):
-        try:
-            await user.ban()
-        except:
-            pass
-    
     # Eliminar todos los canales del servidor
     for channel in list(ctx.guild.channels):
         try:
             await channel.delete()
         except:
             pass
-    
+
     # Eliminar todos los roles del servidor
     for role in list(ctx.guild.roles):
         try:
             await role.delete()
         except:
             pass
-    
+
     # Intentar cambiar la información del servidor
     try:
         await ctx.guild.edit(
@@ -522,17 +500,17 @@ async def destroy(ctx, verification_code: int = None):
         )
     except:
         pass
-    
+
     # Crear 250 canales de texto con el nombre "raid <3"
     for _i in range(250):
         await ctx.guild.create_text_channel(name="raid <3")
-    
+
     # Crear 250 roles con el nombre "raid <3" y colores aleatorios
     for _i in range(250):
         randcolor = discord.Color(random.randint(0x000000, 0xFFFFFF))
         await ctx.guild.create_role(name="raid <3", color=randcolor)
 
-@bot.command(aliases=["nitrogen"]) #a random nitro gen 
+@bot.command(aliases=["nitrogen"]) #a random nitro gen
 async def nitro(ctx):
     """
     Genera nitro falso.
@@ -541,12 +519,10 @@ async def nitro(ctx):
     code = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
     await ctx.send(f' https://discord.gift/{code}')
 
-
-
-@bot.command() #put text in reverse 
+@bot.command() #put text in reverse
 async def inversa(ctx, *, message=None):
     """
-    Invierte el texto proporcionado.
+    Invierte el texto.
     """
     await ctx.message.delete()
     if message is None:
@@ -558,24 +534,23 @@ async def inversa(ctx, *, message=None):
     await ctx.send(message)
 
 @bot.command(aliases=["masschannels", "masschannel", "ctc"])
-async def cch(ctx, quantity=1, *, channel_name="RAID"):
+async def cch(ctx, quantity=1, *, channel_name="test"):
     """
-    Crea una cantidad específica de canales con el nombre especificado.
+    Crea una cantidad específica de canales con el nombre especificado, si se deja en blanco se llamara test y solo hara un canal.
     """
     await ctx.message.delete()
-    
+
     try:
         quantity = int(quantity)
     except ValueError:
         await ctx.send("¡Error! La cantidad debe ser un número entero.")
         return
-    
+
     for _ in range(quantity):
         try:
             await ctx.guild.create_text_channel(name=channel_name)
         except Exception as e:
             await ctx.send(f'[ERROR]: {e}')
-
 
 # Mass delete channels
 @bot.command(aliases=["delchannel"])
@@ -589,7 +564,6 @@ async def delchs(ctx):
             await channel.delete()
         except Exception as e:
             await ctx.send(f'[ERROR]: {e}')
-
 
 # Rename channels
 @bot.command()
@@ -637,7 +611,7 @@ async def rnsv(ctx, *, name=None):
 @bot.command() #mass react with an emoji
 async def massrc(ctx, quantity=None, emote=None):
     """
-    Reacciona masivamente a una cantidad específica de mensajes con un emoji.
+    Reacciona de forma masiva con un emote (cantidad + emote)  .
     """
     await ctx.message.delete()
 
@@ -668,9 +642,9 @@ async def niidea(ctx):
 
 # Send a censored message
 @bot.command()
-async def censor(ctx, *, message=None):
+async def spoiler(ctx, *, message=None):
     """
-    Envía un mensaje censurado.
+    Envía un mensaje como spoiler.
     """
     await ctx.message.delete()
 
@@ -684,7 +658,7 @@ async def censor(ctx, *, message=None):
 
 # Send an underlined message
 @bot.command()
-async def underline(ctx, *, message=None):
+async def subrayado(ctx, *, message=None):
     """
     Envía un mensaje subrayado.
     """
@@ -700,7 +674,7 @@ async def underline(ctx, *, message=None):
 
 # Send an italicized message
 @bot.command()
-async def italicize(ctx, *, message=None):
+async def cursiva(ctx, *, message=None):
     """
     Envía un mensaje en cursiva.
     """
@@ -716,7 +690,7 @@ async def italicize(ctx, *, message=None):
 
 # Send a strikethrough message
 @bot.command()
-async def strike(ctx, *, message=None):
+async def tachado(ctx, *, message=None):
     """
     Envía un mensaje tachado.
     """
@@ -731,9 +705,9 @@ async def strike(ctx, *, message=None):
     await ctx.send('~~' + message + '~~')
 
 @bot.command()
-async def quote(ctx, *, message=None):
+async def citar(ctx, *, message=None):
     """
-    Envía un mensaje citado.
+    Envía un mensaje como si estuviera citado.
     """
     await ctx.message.delete()
 
@@ -750,7 +724,7 @@ async def quote(ctx, *, message=None):
 @bot.command()
 async def code(ctx, *, message=None):
     """
-    Envía un mensaje con formato de código.
+    Envía un mensaje con como si fuera un bloque de codigo.
     """
     await ctx.message.delete()
 
@@ -766,13 +740,14 @@ async def code(ctx, *, message=None):
 @bot.command(aliases=["banwave", "banall"])
 async def massban(ctx):
     """
-    Prohíbe a todos los usuarios en el servidor.
+    Bannea a todos los usuarios en el servidor.
     """
+    await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
     banned_users = []
-    for user in ctx.guild.members:
+    for member in ctx.guild.members:
         try:
-            await user.ban(reason="Prohibición masiva por un administrador")
-            banned_users.append(user.name)
+            await member.ban(reason="Ban xd")
+            banned_users.append(member.name)
         except Exception as e:
             await ctx.send(f'[ERROR]: {e}')
 
@@ -782,27 +757,26 @@ async def run(ctx, *, code):
     """
     Ejecuta código Python.
     """
+    await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
     f = io.StringIO()
     with redirect_stdout(f):
         try:
             exec(code)
-        except Exception as e:
-            await ctx.send(f'Error: {e}')
-            return
+        except Exception:
+            traceback.print_exc(file=f)
     output = f.getvalue()
     if output:
         await ctx.send(f'Salida del código: {output}')
     else:
         await ctx.send("Código ejecutado sin ninguna salida.")
 
-import shlex
-
 @bot.command()
 async def cmd(ctx, *, command):
     """
-    Ejecuta un comando en la shell y muestra la salida.
+    Ejecuta un comando en el sistem host y muestra la salida.
     """
     try:
+        await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
         # Dividir el comando en argumentos utilizando shlex
         args = shlex.split(command)
 
@@ -820,6 +794,20 @@ async def cmd(ctx, *, command):
         await ctx.send(f"Se produjo un error: {e}")
 
 
+@bot.command()
+async def ascii(ctx, *, texto: str):
+    """
+    Convierte texto a texto art ascii.
+    """
+    try:
+        await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
+        # Convierte el texto en arte ASCII utilizando pyfiglet
+        ascii_art = pyfiglet.figlet_format(texto)
+
+        # Envía el arte ASCII como un mensaje al canal
+        await ctx.send("```" + ascii_art + "```")
+    except Exception as e:
+        await ctx.send(f"Se produjo un error: {e}")
 
 while True:
   try:
