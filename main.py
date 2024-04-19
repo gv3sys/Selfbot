@@ -61,8 +61,6 @@ STATUS_FILE = "status.txt"
 OPENAI_API_KEY = read_openai_token("token_open.txt")
 # Configura el modelo de OpenAI que deseas utilizar
 
-# Definición del archivo que contiene los estados
-STATUS_FILE = "status.txt"
 
 # Inicializa el cliente de
 openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
