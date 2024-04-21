@@ -25,7 +25,7 @@ Pasos para comenzar:
 3. Si desea configurar estados de streaming, edite el archivo status y agregue los estados separados por ";".
 4. Ejecute el archivo requirements_install.bat para instalar todas las dependencias necesarias.
 5. Una vez que se completen las instalaciones, verá un mensaje de finalización.
-6. Finalmente, ejecute el archivo run.bat para iniciar el Selfbot.
+6. Finalmente, ejecute el archivo run.bat para iniciar el Selfbot y ejecutar el comando "!help" en un canal de texto para ver los comandos y sus funciones.
 
 ########################################################################################################################################################################################################################################
 
@@ -53,7 +53,7 @@ Pasos para comenzar:
 3. Si desea configurar estados de streaming, edite el archivo status y agregue los estados separados por ";".
 4. Ejecute el archivo requirements_install.sh para instalar todas las dependencias necesarias.
 5. Una vez que se completen las instalaciones, verá un mensaje de finalización.
-6. Finalmente, ejecute el archivo run.sh para iniciar el Selfbot.
+6. Finalmente, ejecute el archivo run.sh para iniciar el Selfbot y ejecutar el comando "!help" en un canal de texto para ver los comandos y sus funciones.
 
 ########################################################################################################################################################################################################################################
 
@@ -63,9 +63,11 @@ Nota sobre Docker:
 - El Dockerfile está diseñado para funcionar en sistemas Linux y no ha sido probado en Windows.
 - Si desea utilizar Docker en Linux:
   1. Asegúrese de tener Docker instalado en su sistema.
-  2. Construya la imagen Docker ejecutando el comando: 
+  2. Construya la imagen Docker ejecutando el comando, previamente habiendo puesto el token en su archivo correspondiente: 
      docker build -t selfbot_discord .
+
   3. Una vez que se complete la construcción de la imagen, puede ejecutar el contenedor con el siguiente comando:
      docker run -d --name selfbot selfbot_discord (el -d es para que se ejecute de fondo si lo haces sin -d en cuanto cierres la terminal se cerrar el selfbot) 
+
 
 Estas instrucciones adicionales proporcionan una guía básica sobre cómo usar Docker para ejecutar el Selfbot en un entorno Linux, junto con la creación de una imagen Docker personalizada y la ejecución del contenedor.
