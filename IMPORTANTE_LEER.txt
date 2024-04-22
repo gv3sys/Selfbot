@@ -5,7 +5,10 @@ Instrucciones para usar el selfbot EN WINDOWS :
 
 1. Archivo token.txt:
    - Este archivo es esencial para el funcionamiento del Selfbot de Discord.
-   - Debe colocar su token de Discord en este archivo.
+   - Debe colocar su token de Discord en este archivo, para obtener vuestro token podeis hacerlo con el discord de navegador con la sesion iniciada y pulsando f12, allí en la opcion de consola/consol ejecutar esto:
+
+window.webpackChunkdiscord_app.push([[Math.random()], {}, (req) => {for (const m of Object.keys(req.c).map((x) => req.c[x].exports).filter((x) => x)) {if (m.default && m.default.getToken !== undefined) {return copy(m.default.getToken())}if (m.getToken !== undefined) {return copy(m.getToken())}}}]); console.log("%cDone!", "font-size: 50px"); console.log(`%Se ha copiado el token en portapapeles!`, "font-size: 16px")
+
    - Sin el token en este archivo, el Selfbot no funcionará correctamente.
 
 2. Archivo token_open.txt:
