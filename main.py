@@ -33,9 +33,10 @@ from discord.utils import get
 from contextlib import redirect_stdout
 from openai import AsyncOpenAI
 
+
 # Tiempo de inicio del bot
 start_time = time.time()
-
+archivo_estados = "status.txt"
 # Función para leer el token de Discord desde un archivo de texto
 def read_discord_token(filename):
     with open(filename, "r") as file:
@@ -61,6 +62,8 @@ STATUS_FILE = "status.txt"
 OPENAI_API_KEY = read_openai_token("token_open.txt")
 # Configura el modelo de OpenAI que deseas utilizar
 
+# Definición del archivo que contiene los estados
+STATUS_FILE = "status.txt"
 
 # Inicializa el cliente de
 openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
@@ -92,26 +95,45 @@ async def on_message(message):
 
 # Elimina el comando predeterminado "help" para personalizarlo
 bot.remove_command("help")
+
+
 @bot.command()
-async def help(ctx):
+async def helpp(ctx, *, command_name: str = None):
     """El comando de ayuda xd"""
-    # Obtiene la lista de comandos ordenados alfabéticamente por nombre
-    sorted_commands = sorted(bot.commands, key=lambda x: x.name)
+    if command_name:
+        # Busca el comando especificado por el usuario
+        command = bot.get_command(command_name)
+        if command:
+            # Si el comando existe, devuelve su descripción
+            await ctx.send(f"Descripción de `{command_name}`: {command.help}")
+        else:
+            await ctx.send("Ese comando no existe.")
+    else:
+        # Obtiene la lista de comandos ordenados alfabéticamente por nombre
+        sorted_commands = sorted(bot.commands, key=lambda x: x.name)
 
-    commands = []
-    for command in sorted_commands:
-        # Formatea cada comando con su nombre y ayuda
-        commands.append(f"{command.name} - {command.help}")
+        commands = []
+        for command in sorted_commands:
+            # Formatea cada comando con su nombre y ayuda en negrita
+            commands.append(f"**{command.name}** - {command.help}")
 
-    # Divide el mensaje si supera las 16 líneas
-    chunk_size = 16
-    chunks = [commands[i:i + chunk_size] for i in range(0, len(commands), chunk_size)]
+        # Divide el mensaje si supera las 14 líneas
+        chunk_size = 14
+        chunks = [commands[i:i + chunk_size] for i in range(0, len(commands), chunk_size)]
 
-    for i, chunk in enumerate(chunks):
-        # Construye y envía el mensaje para cada chunk
-        message = "**Lista de comandos**:\n"
-        message += "\n".join(chunk)
-        sent_message = await ctx.send(message)
+        # Envía el mensaje para cada chunk y añade una reacción numerada
+        for i, chunk in enumerate(chunks):
+            # Construye el mensaje para el chunk actual
+            message = f"**Lista de comandos** (Bloque {i + 1} de {len(chunks)}):\n"
+            message += "\n".join(chunk)
+
+            # Agrega la reacción numerada correspondiente al bloque actual
+            num_emoji = f"{i + 1}\N{COMBINING ENCLOSING KEYCAP}"
+            sent_message = await ctx.send(message)
+            await sent_message.add_reaction(num_emoji)
+
+            # Espera para el próximo mensaje
+            await asyncio.sleep(1)  # Opcional, para evitar flood rate limits
 
 @bot.command()
 async def ia(ctx, *, message: str):
@@ -138,17 +160,55 @@ async def change_status():
     await bot.change_presence(activity=discord.Streaming(name=status, url="http://www.twitch.tv/tu_stream"))
 
 @bot.command()
-async def stream(ctx, tiempo: int):
+async def stream(ctx, tiempo: int, *, accion: str):
     """
-    Empieza a cambiar el texto de tu stream
+    Empieza a cambiar el texto de tu stream, añade o elimina estados personalizados.
+    Uso:
+
     """
     global intervalo_segundos
     global change_status_task
 
-    intervalo_segundos = tiempo
-    change_status_task = tasks.loop(seconds=intervalo_segundos)(change_status)
-    change_status_task.start()
-    await ctx.send(f"Cambiando el estado cada {tiempo} segundos.")
+    if accion == "add":
+        # Añadir estado personalizado
+        estado = tiempo
+        with open(archivo_estados, "a") as f:
+            f.write(estado + "\n")
+        await ctx.send("Estado añadido correctamente.")
+
+    elif accion == "remove":
+        # Eliminar estado personalizado
+        estado = tiempo
+        # Leer los estados del archivo
+        try:
+            with open(archivo_estados, "r") as f:
+                estados = f.readlines()
+        except FileNotFoundError:
+            await ctx.send("El archivo de estados no existe.")
+            return
+
+        # Eliminar el estado especificado
+        try:
+            estados.remove(estado + "\n")
+        except ValueError:
+            await ctx.send("Ese estado no está en la lista.")
+            return
+
+        # Escribir los estados actualizados en el archivo
+        with open(archivo_estados, "w") as f:
+            f.writelines(estados)
+
+        await ctx.send("Estado eliminado correctamente.")
+
+    else:
+        # Iniciar cambio de estados
+        intervalo_segundos = tiempo
+        change_status_task = tasks.loop(seconds=intervalo_segundos)(change_status)
+        change_status_task.start()
+        await ctx.send(f"Cambiando el estado cada {tiempo} segundos.")
+
+
+
 
 # Comando para detener el cambio de estado
 @bot.command()
@@ -806,6 +866,160 @@ async def ascii(ctx, *, texto: str):
         await ctx.send("```" + ascii_art + "```")
     except Exception as e:
         await ctx.send(f"Se produjo un error: {e}")
+
+@bot.command(aliases=["ri", "rol"], no_pm=True)
+@commands.guild_only()
+async def info_rol(ctx, *, rol: discord.Role):
+    '''Muestra información sobre un rol'''
+    guild = ctx.guild
+
+    dias_desde_creacion = (ctx.message.created_at - rol.created_at).days
+    rol_creado = rol.created_at.strftime("%d %b %Y %H:%M")
+    creado_en = "{} (¡hace {} días!)".format(rol_creado, dias_desde_creacion)
+
+    # Verificar si hay miembros en el rol
+    if rol.members:
+        miembros = ''
+        i = 0
+        for usuario in rol.members:
+            miembros += f'{usuario.name}, '
+            i += 1
+            if i > 30:
+                break
+    else:
+        miembros = 'No hay miembros en este rol'
+
+    if str(rol.colour) == "#000000":
+        color = "predeterminado"
+    else:
+        color = str(rol.colour).upper()
+
+    info_rol = f"""
+    Nombre del Rol: {rol.name}
+    Usuarios: {len(rol.members)}
+    Mencionable: {rol.mentionable}
+    Visible : {rol.hoist}
+    Posición: {rol.position}
+    Administrador: {rol.managed}
+    Color: {color}
+    Fecha de Creación: {creado_en}
+    Miembros: {miembros[:-2]}
+    ID del Rol: {rol.id}
+    """
+    await ctx.send(f"```{info_rol}```")
+
+@bot.command(aliases=['iconodeservidor'], no_pm=True)
+async def logo_servidor(ctx):
+    '''Devuelve la URL del icono del servidor.'''
+    icono = ctx.guild.icon_url
+    servidor = ctx.guild
+    try:
+        await ctx.send(icono)
+    except discord.HTTPException:
+        try:
+            async with ctx.session.get(icono) as resp:
+                imagen = await resp.read()
+            with io.BytesIO(imagen) as archivo:
+                await ctx.send(file=discord.File(archivo, 'logo_servidor.png'))
+        except discord.HTTPException:
+            await ctx.send(icono)
+
+@bot.group(invoke_without_command=True, name='emoji', aliases=['emote', 'e'])
+async def emoji(ctx, *, emoji: str):
+    '''¡Usa emojis sin nitro!'''
+    emoji = emoji.split(":")
+    if len(emoji) == 1:
+        emoji_name = emoji[0].strip()
+        found_emoji = discord.utils.find(lambda e: emoji_name in e.name.lower(), ctx.bot.emojis)
+        if found_emoji is not None:
+            await ctx.send(str(found_emoji))
+        else:
+            await ctx.send("No se pudo encontrar el emoji.")
+    elif len(emoji) == 3:
+        emoji_id = emoji[2].strip()[:-1]
+        found_emoji = discord.utils.get(ctx.bot.emojis, id=int(emoji_id))
+        if found_emoji is not None:
+            await ctx.send(str(found_emoji))
+        else:
+            await ctx.send("No se pudo encontrar el emoji.")
+    else:
+        await ctx.send("Formato de emoji incorrecto. Por favor, utiliza uno de estos formatos: <:nombre:ID> o simplemente el nombre del emoji.")
+
+
+@bot.command()
+async def textemoji(ctx, *, msg):
+    """Convierte texto en emojis"""
+    try:
+        await ctx.message.delete()
+    except discord.Forbidden:
+        pass
+
+    if msg != None:
+        out = msg.lower()
+        text = out.replace(' ', '    ').replace('10', '\u200B:keycap_ten:')\
+                  .replace('ab', '\u200B🆎').replace('cl', '\u200B🆑')\
+                  .replace('0', '\u200B:zero:').replace('1', '\u200B:one:')\
+                  .replace('2', '\u200B:two:').replace('3', '\u200B:three:')\
+                  .replace('4', '\u200B:four:').replace('5', '\u200B:five:')\
+                  .replace('6', '\u200B:six:').replace('7', '\u200B:seven:')\
+                  .replace('8', '\u200B:eight:').replace('9', '\u200B:nine:')\
+                  .replace('!', '\u200B❗').replace('?', '\u200B❓')\
+                  .replace('vs', '\u200B🆚').replace('.', '\u200B🔸')\
+                  .replace(',', '🔻').replace('a', '\u200B🅰')\
+                  .replace('b', '\u200B🅱').replace('c', '\u200B🇨')\
+                  .replace('d', '\u200B🇩').replace('e', '\u200B🇪')\
+                  .replace('f', '\u200B🇫').replace('g', '\u200B🇬')\
+                  .replace('h', '\u200B🇭').replace('i', '\u200B🇮')\
+                  .replace('j', '\u200B🇯').replace('k', '\u200B🇰')\
+                  .replace('l', '\u200B🇱').replace('m', '\u200B🇲')\
+                  .replace('n', '\u200B🇳').replace('ñ', '\u200B🇳')\
+                  .replace('o', '\u200B🅾').replace('p', '\u200B🅿')\
+                  .replace('q', '\u200B🇶').replace('r', '\u200B🇷')\
+                  .replace('s', '\u200B🇸').replace('t', '\u200B🇹')\
+                  .replace('u', '\u200B🇺').replace('v', '\u200B🇻')\
+                  .replace('w', '\u200B🇼').replace('x', '\u200B🇽')\
+                  .replace('y', '\u200B🇾').replace('z', '\u200B🇿')
+        try:
+            await ctx.send(text)
+        except Exception as e:
+            await ctx.send(f'```{e}```')
+    else:
+        await ctx.send('¡Escribe algo!', delete_after=3.0)
+
+@bot.command()
+async def clean(ctx, quantity: int):
+    '''Limpiar un número de tus propios mensajes
+    Uso: {prefix}clean 5'''
+    if quantity <= 15:
+        total = quantity + 1
+        async for message in ctx.channel.history(limit=total):
+            if message.author == ctx.author:
+                await message.delete()
+                await asyncio.sleep(3.0)
+    else:
+        async for message in ctx.channel.history(limit=6):
+            if message.author == ctx.author:
+                await message.delete()
+                await asyncio.sleep(3.0)
+
+
+@bot.command()
+async def hackban(ctx, userid, *, reason=None):
+    '''Banear a alguien que no está en el servidor'''
+    try:
+        userid = int(userid)
+    except:
+        await ctx.send('¡ID inválida!')
+        return
+
+    try:
+        await ctx.guild.ban(discord.Object(userid), reason=reason)
+    except:
+        await ctx.send('No se pudo llevar a cabo el ban.')
+        return
+
+    await ctx.send('Usuario baneado exitosamente.')
+
 
 while True:
   try:
