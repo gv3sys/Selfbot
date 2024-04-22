@@ -98,7 +98,7 @@ bot.remove_command("help")
 
 
 @bot.command()
-async def helpp(ctx, *, command_name: str = None):
+async def help(ctx, *, command_name: str = None):
     """El comando de ayuda xd"""
     if command_name:
         # Busca el comando especificado por el usuario
