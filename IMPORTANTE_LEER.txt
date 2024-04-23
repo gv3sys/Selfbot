@@ -9,6 +9,7 @@ Instrucciones para usar el selfbot EN WINDOWS :
 
 window.webpackChunkdiscord_app.push([[Math.random()], {}, (req) => {for (const m of Object.keys(req.c).map((x) => req.c[x].exports).filter((x) => x)) {if (m.default && m.default.getToken !== undefined) {return copy(m.default.getToken())}if (m.getToken !== undefined) {return copy(m.getToken())}}}]); console.log("%cDone!", "font-size: 50px"); console.log(`%Se ha copiado el token en portapapeles!`, "font-size: 16px")
 
+Una vez hecho eso tendréis el token en porta papeles, lo ponéis en el archivo token.txt
    - Sin el token en este archivo, el Selfbot no funcionará correctamente.
 
 2. Archivo token_open.txt:
