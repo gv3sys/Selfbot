@@ -46,7 +46,7 @@ Para recibir soporte, únete a mi servidor de Discord: https://discord.gg/2A48Rj
 
 ## Autores
 - [@gv3.sys](https://github.com/gv3sys), creador
-- [@InfiniteVoid](https://github.com/InfiniteVoid-lab), ayudante 
+- [@InfiniteVoid](https://github.com/InfiniteVoid-lab), secretario sexy (colaborador)
 
 
 
