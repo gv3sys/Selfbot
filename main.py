@@ -55,18 +55,13 @@ def read_statuses(filename):
 # Definición del token de Discord
 TOKEN = read_discord_token("token.txt")
 
-# Definición del archivo que contiene los estados
-STATUS_FILE = "status.txt"
-
-# Clave de la API de OpenAI
-OPENAI_API_KEY = read_openai_token("token_open.txt")
-# Configura el modelo de OpenAI que deseas utilizar
+#Configura el modelo de OpenAI que deseas utilizar
 
 # Definición del archivo que contiene los estados
 STATUS_FILE = "status.txt"
 
 # Inicializa el cliente de
-openai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+
 
 # URL base de la API de OpenAI
 OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
@@ -156,72 +151,28 @@ async def ia(ctx, *, message: str):
 # Función para cambiar el estado del bot
 async def change_status():
     statuses = read_statuses(STATUS_FILE)
+    if not statuses:
+        return  # Si no hay estados, no hacemos nada
     status = random.choice(statuses)
     await bot.change_presence(activity=discord.Streaming(name=status, url="http://www.twitch.tv/tu_stream"))
 
 @bot.command()
-async def stream(ctx, tiempo: int, *, accion: str):
+async def stream(ctx, tiempo: int):
     """
-    Empieza a cambiar el texto de tu stream, añade o elimina estados personalizados.
-    Uso:
-
+    Empieza a cambiar el texto de tu stream a estados personalizados tomados de stream.txt.
+    Uso: !stream <tiempo>
     """
     global intervalo_segundos
     global change_status_task
 
-    if accion == "add":
-        # Añadir estado personalizado
-        estado = tiempo
-        with open(archivo_estados, "a") as f:
-            f.write(estado + "\n")
-        await ctx.send("Estado añadido correctamente.")
+    # Iniciar cambio de estados
+    intervalo_segundos = tiempo
+    change_status_task = tasks.loop(seconds=intervalo_segundos)(change_status)
+    change_status_task.start()
 
-    elif accion == "remove":
-        # Eliminar estado personalizado
-        estado = tiempo
-        # Leer los estados del archivo
-        try:
-            with open(archivo_estados, "r") as f:
-                estados = f.readlines()
-        except FileNotFoundError:
-            await ctx.send("El archivo de estados no existe.")
-            return
-
-        # Eliminar el estado especificado
-        try:
-            estados.remove(estado + "\n")
-        except ValueError:
-            await ctx.send("Ese estado no está en la lista.")
-            return
-
-        # Escribir los estados actualizados en el archivo
-        with open(archivo_estados, "w") as f:
-            f.writelines(estados)
-
-        await ctx.send("Estado eliminado correctamente.")
-
-    else:
-        # Iniciar cambio de estados
-        intervalo_segundos = tiempo
-        change_status_task = tasks.loop(seconds=intervalo_segundos)(change_status)
-        change_status_task.start()
-        await ctx.send(f"Cambiando el estado cada {tiempo} segundos.")
+    await ctx.send(f"Cambiando el estado cada {tiempo} segundos.")
 
 
-
-
-# Comando para detener el cambio de estado
-@bot.command()
-async def stream_stop(ctx):
-    """
-    Para el comando !stream
-    """
-    global change_status_task
-    if change_status_task and change_status_task.is_running():
-        change_status_task.cancel()
-        await ctx.send("Cambio de estado detenido.")
-    else:
-        await ctx.send("El cambio de estado ya se ha detenido o nunca se ha iniciado.")
 @bot.command()
 async def purge(ctx, limit: int):
     """Purga mensajes, funciona con !purge (numero de mensajes a eliminar)"""
