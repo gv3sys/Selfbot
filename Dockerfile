@@ -1,9 +1,9 @@
-# Usar imagen base de Debian 11
-FROM debian:11
+# Usar imagen base de Fedora
+FROM fedora:latest
 
 # Actualizar e instalar paquetes necesarios
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip
+RUN dnf -y update && \
+    dnf -y install python3 python3-pip
 
 # Copiar los archivos necesarios al contenedor
 COPY main.py /app/main.py
@@ -15,7 +15,6 @@ COPY status.txt /app/status.txt
 WORKDIR /app
 
 # Instalar las dependencias del archivo requirements.txt si existen
-# (las bibliotecas especificadas se instalarán automáticamente al ejecutar 'pip install -r requirements.txt')
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir -r requirements.txt
 
