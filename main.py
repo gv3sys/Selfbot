@@ -16,7 +16,6 @@ import platform
 import subprocess
 import sys
 import shlex
-import string
 # Importaciones específicas de bibliotecas externas
 import aiohttp
 import colorama
@@ -37,12 +36,13 @@ from openai import AsyncOpenAI
 # Tiempo de inicio del bot
 start_time = time.time()
 archivo_estados = "status.txt"
+
 # Función para leer el token de Discord desde un archivo de texto
 def read_discord_token(filename):
     with open(filename, "r") as file:
         return file.read().strip()
 
-# Función para leer la clave de la API de OpenAI desde un archivo de texto
+# Función para leer el token de la API de OpenAI
 def read_openai_token(filename):
     with open(filename, "r") as file:
         return file.read().strip()
@@ -55,20 +55,23 @@ def read_statuses(filename):
 # Definición del token de Discord
 TOKEN = read_discord_token("token.txt")
 
-#Configura el modelo de OpenAI que deseas utilizar
+# Carga el token de OpenAI desde el archivo 'token_open.txt'
+openai_token = read_openai_token("token_open.txt")
+
+# Inicializa el cliente de OpenAI con el token leído del archivo
+client = AsyncOpenAI(api_key=openai_token)
 
 # Definición del archivo que contiene los estados
 STATUS_FILE = "status.txt"
 
-# Inicializa el cliente de
-
-
-# URL base de la API de OpenAI
-OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+# Lista de modelos de voz disponibles
+tts_models = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
 
 # Función para limpiar la consola
 def clear():
-    os.system("cls")
+    os.system("clear")
+
+
 
 # Creación del bot con el prefijo y la configuración del self_bot
 bot = commands.Bot(command_prefix=("!"), self_bot=True)
@@ -130,24 +133,6 @@ async def help(ctx, *, command_name: str = None):
             # Espera para el próximo mensaje
             await asyncio.sleep(1)  # Opcional, para evitar flood rate limits
 
-@bot.command()
-async def ia(ctx, *, message: str):
-    """Interactua con GPT-3.5-turbo, requiere el token de openai """
-    # Genera una respuesta utilizando OpenAI
-    completion = await openai_client.chat.completions.create(
-        model="gpt-3.5-turbo-0125",
-        messages=[{"role": "user", "content": message}]
-    )
-
-    # Verifica si hay una respuesta en la lista de choices
-    if completion.choices:
-        response = completion.choices[0].message.content
-    else:
-        response = "No response"
-
-    # Envía la respuesta al canal de Discord
-    await ctx.send(response)
-
 # Función para cambiar el estado del bot
 async def change_status():
     statuses = read_statuses(STATUS_FILE)
@@ -156,21 +141,85 @@ async def change_status():
     status = random.choice(statuses)
     await bot.change_presence(activity=discord.Streaming(name=status, url="http://www.twitch.tv/tu_stream"))
 
+# Comando para interactuar con GPT-3.5
 @bot.command()
-async def stream(ctx, tiempo: int):
-    """
-    Empieza a cambiar el texto de tu stream a estados personalizados tomados de stream.txt.
-    Uso: !stream <tiempo>
-    """
-    global intervalo_segundos
-    global change_status_task
+async def gpt(ctx, *, message: str):
+    """Interactúa con GPT-4, requiere el token de OpenAI."""
+    try:
+        # Genera la respuesta usando el modelo
+        completion = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": message}]  # Usa el mensaje del usuario
+        )
 
-    # Iniciar cambio de estados
-    intervalo_segundos = tiempo
-    change_status_task = tasks.loop(seconds=intervalo_segundos)(change_status)
-    change_status_task.start()
+        # Envía la respuesta al canal de Discord
+        await ctx.send(completion.choices[0].message.content)
 
-    await ctx.send(f"Cambiando el estado cada {tiempo} segundos.")
+    except Exception as e:
+        await ctx.send(f'Error al obtener respuesta: {str(e)}')
+
+@bot.command()
+async def tts(ctx, model: str = None, *, message: str = None):
+    """Convierte el mensaje a audio usando TTS de OpenAI.
+    
+    Uso:
+        !tts [modelo] [mensaje]
+    
+    Modelos disponibles:
+        - alloy
+        - echo
+        - fable
+        - onyx
+        - nova
+        - shimmer
+    """
+    if model is None or message is None:
+        # Si no se proporcionan el modelo o el mensaje, muestra la ayuda
+        await ctx.send("Por favor, especifica un modelo y un mensaje.\n\n" + tts.__doc__)
+        return
+
+    if model not in tts_models:
+        await ctx.send(f"Modelo no válido. Los modelos disponibles son: {', '.join(tts_models)}")
+        return
+
+    try:
+        # Configura la URL de la API
+        url = "https://api.openai.com/v1/audio/speech"
+        
+        # Configura los headers, incluyendo la clave de API
+        headers = {
+            "Authorization": f"Bearer {openai_token}",  # Usa la clave de API cargada
+            "Content-Type": "application/json"
+        }
+
+        # Configura el cuerpo de la solicitud
+        data = {
+            "model": "tts-1-hd",  # Asegúrate de que este modelo esté disponible
+            "input": message,
+            "voice": model,  # Usa el modelo proporcionado por el usuario
+            "response_format": "mp3"  # Cambia a "mp3" para recibir el audio directamente
+        }
+
+        # Realiza la solicitud POST a la API
+        response = requests.post(url, headers=headers, json=data)
+
+        # Verifica si la solicitud fue exitosa
+        if response.status_code == 200:
+            # Guarda el archivo MP3 en el sistema
+            audio_file_path = "output.mp3"
+            with open(audio_file_path, 'wb') as audio_file:
+                audio_file.write(response.content)  # Escribe el contenido del audio
+
+            # Envía el archivo al canal de Discord
+            await ctx.send(file=discord.File(audio_file_path))
+            
+            # Elimina el archivo después de enviarlo
+            os.remove(audio_file_path)
+        else:
+            await ctx.send(f'Error al obtener audio: {response.status_code} - {response.text}')
+
+    except Exception as e:
+        await ctx.send(f'Error al obtener audio: {str(e)}')
 
 
 @bot.command()
