@@ -222,6 +222,37 @@ async def tts(ctx, model: str = None, *, message: str = None):
         await ctx.send(f'Error al obtener audio: {str(e)}')
 
 
+
+# Comando para analizar imágenes
+@bot.command()
+async def gpti(ctx, *, image_url: str):
+    """Analiza una imagen a partir de su URL."""
+    try:
+        # Genera la respuesta usando la imagen proporcionada
+        completion = await client.chat.completions.create(
+            model="gpt-4o",  # Asegúrate de que este modelo esté disponible
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Que es esta imagen?, describeme que sale en esta imagen"},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_url,
+                            }
+                        },
+                    ],
+                }
+            ],
+        )
+
+        # Envía la respuesta al canal de Discord
+        await ctx.send(completion.choices[0].message.content)
+
+    except Exception as e:
+        await ctx.send(f'Error al analizar la imagen: {str(e)}')
+
 @bot.command()
 async def purge(ctx, limit: int):
     """Purga mensajes, funciona con !purge (numero de mensajes a eliminar)"""
