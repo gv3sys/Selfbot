@@ -140,6 +140,22 @@ async def change_status():
         return  # Si no hay estados, no hacemos nada
     status = random.choice(statuses)
     await bot.change_presence(activity=discord.Streaming(name=status, url="http://www.twitch.tv/tu_stream"))
+    
+@bot.command()
+async def stream(ctx, tiempo: int):
+    """
+    Empieza a cambiar el texto de tu stream a estados personalizados tomados de stream.txt.
+    Uso: !stream <tiempo>
+    """
+    global intervalo_segundos
+    global change_status_task
+
+    # Iniciar cambio de estados
+    intervalo_segundos = tiempo
+    change_status_task = tasks.loop(seconds=intervalo_segundos)(change_status)
+    change_status_task.start()
+
+    await ctx.send(f"Cambiando el estado cada {tiempo} segundos.")
 
 # Comando para interactuar con GPT-3.5
 @bot.command()
