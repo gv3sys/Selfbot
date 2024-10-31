@@ -254,6 +254,173 @@ async def gpti(ctx, *, image_url: str):
         await ctx.send(f'Error al analizar la imagen: {str(e)}')
 
 @bot.command()
+async def imagin(ctx, *, prompt: str):
+    """Genera una imagen a partir del prompt dado en resolución 1080p."""
+    try:
+        # Genera la imagen usando DALL-E en resolución 1920x1080
+        response = await client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1792x1024",  # Cambiado a resolución 1080p
+            quality="hd",  # Asegúrate de que la calidad esté configurada en alta
+            n=1,
+        )
+
+        image_url = response.data[0].url
+
+        # Envía la URL de la imagen generada al canal de Discord
+        await ctx.send(image_url)
+
+    except Exception as e:
+        await ctx.send(f'Error al generar la imagen: {str(e)}')
+
+@bot.command()
+async def translate_audio(ctx, url: str = None):
+    """Traduce un archivo de audio a texto en inglés. Usa un link o sube un archivo de audio."""
+    if url is None and not ctx.message.attachments:
+        await ctx.send("Por favor, proporciona un enlace de audio o sube un archivo de audio.")
+        return
+
+    if url:
+        # Descargar el archivo de audio desde el enlace
+        try:
+            audio_file_path = "./temp_audio.mp3"  # Nombre temporal del archivo
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status != 200:
+                        await ctx.send("No se pudo descargar el archivo de audio desde el enlace proporcionado.")
+                        return
+                    with open(audio_file_path, 'wb') as f:
+                        f.write(await response.read())
+        except Exception as e:
+            await ctx.send(f'**Error al descargar el audio: ** {str(e)}')
+            return
+    else:
+        attachment = ctx.message.attachments[0]
+        audio_file_path = f"./{attachment.filename}"
+        await attachment.save(audio_file_path)
+
+    try:
+        # Abre el archivo de audio
+        with open(audio_file_path, "rb") as audio_file:
+            translation = await client.audio.translations.create(
+                model="whisper-1",
+                file=audio_file
+            )
+
+        # Comprobar el tipo de respuesta
+        if isinstance(translation, dict) and 'text' in translation:
+            await ctx.send(f"Traducción: {translation['text']}")
+        else:
+            await ctx.send("Error en la traducción del audio.")
+
+    except Exception as e:
+        await ctx.send(f'Error al traducir el audio: {str(e)}')
+
+    finally:
+        # Eliminar el archivo de audio temporal
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)
+
+@bot.command()
+async def wispertxt(ctx, url: str = None):
+    """Transcribe un archivo de audio a texto. Usa un link o sube un archivo de audio."""
+    if url is None and not ctx.message.attachments:
+        await ctx.send("Por favor, proporciona un enlace de audio o sube un archivo de audio.")
+        return
+
+    if url:
+        # Descargar el archivo de audio desde el enlace
+        try:
+            audio_file_path = "./temp_audio.mp3"  # Nombre temporal del archivo
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status != 200:
+                        await ctx.send("No se pudo descargar el archivo de audio desde el enlace proporcionado.")
+                        return
+                    with open(audio_file_path, 'wb') as f:
+                        f.write(await response.read())
+        except Exception as e:
+            await ctx.send(f'**Error al descargar el audio:** {str(e)}')
+            return
+    else:
+        attachment = ctx.message.attachments[0]
+        audio_file_path = f"./{attachment.filename}"
+        await attachment.save(audio_file_path)
+
+    try:
+        # Abre el archivo de audio
+        with open(audio_file_path, "rb") as audio_file:
+            transcription = await client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                response_format="text"  # Esto debería dar solo texto
+            )
+
+        # Aquí la transcripción debe ser un string directo
+        await ctx.send(f"Transcripción: {transcription}")  # Envía directamente la transcripción
+
+    except Exception as e:
+        await ctx.send(f'Error al transcribir el audio: {str(e)}')
+    finally:
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)  # Elimina el archivo de audio temporal
+
+async def wispertr(ctx, idioma: str, url: str = None):
+    """Transcribe un archivo de audio a texto y lo traduce al idioma especificado. Usa un link o sube un archivo de audio."""
+    
+    if url is None and not ctx.message.attachments:
+        await ctx.send("Por favor, proporciona un enlace de audio o sube un archivo de audio.")
+        return
+
+    if url:
+        # Descargar el archivo de audio desde el enlace
+        try:
+            audio_file_path = "./temp_audio.mp3"  # Nombre temporal del archivo
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status != 200:
+                        await ctx.send("No se pudo descargar el archivo de audio desde el enlace proporcionado.")
+                        return
+                    with open(audio_file_path, 'wb') as f:
+                        f.write(await response.read())
+        except Exception as e:
+            await ctx.send(f'**Error al descargar el audio:** {str(e)}')
+            return
+    else:
+        attachment = ctx.message.attachments[0]
+        audio_file_path = f"./{attachment.filename}"
+        await attachment.save(audio_file_path)
+
+    try:
+        # Abre el archivo de audio
+        with open(audio_file_path, "rb") as audio_file:
+            transcription = await client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                response_format="text"  # Esto debería dar solo texto
+            )
+
+        # Aquí la transcripción debe ser un string directo
+        transcripcion_texto = transcription  # Usa la transcripción directamente
+
+        # Envía el mensaje al modelo GPT para traducir el texto
+        translate_message = f"Traducemelo al {idioma}: {transcripcion_texto}"
+        completion = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": translate_message}]  # Usa el mensaje de traducción
+        )
+
+        # Envía la respuesta al canal de Discord
+        await ctx.send(completion.choices[0].message.content)
+
+    except Exception as e:
+        await ctx.send(f'Error al transcribir o traducir el audio: {str(e)}')
+    finally:
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)  # Elimina el archivo de audio temporal
+
+@bot.command()
 async def purge(ctx, limit: int):
     """Purga mensajes, funciona con !purge (numero de mensajes a eliminar)"""
     # Elimina el mensaje del usuario que llamó al comando
