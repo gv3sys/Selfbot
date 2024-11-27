@@ -1,5 +1,5 @@
 # Usar imagen base de Fedora
-FROM fedora:latest
+FROM fedora:40
 
 # Actualizar e instalar paquetes necesarios
 RUN dnf -y update && \
