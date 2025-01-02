@@ -1,4 +1,4 @@
-# Importaciones esenciales
+contextlib# Importaciones esenciales
 import asyncio
 import datetime
 import io
@@ -51,6 +51,11 @@ def read_openai_token(filename):
 def read_statuses(filename):
     with open(filename, "r") as file:
         return file.read().strip().split(';')
+
+# Lee el token de ipinfo.io desde el archivo ipinfo_token.txt
+def get_ipinfo_token():
+    with open('ipinfo_token.txt', 'r') as file:
+        return file.readline().strip() 
 
 # Definición del token de Discord
 TOKEN = read_discord_token("token.txt")
@@ -241,9 +246,22 @@ async def tts(ctx, model: str = None, *, message: str = None):
 
 # Comando para analizar imágenes
 @bot.command()
-async def gpti(ctx, *, image_url: str):
-    """Analiza una imagen a partir de su URL."""
+async def gpti(ctx):
+    """Analiza una imagen a partir de su URL o archivo (acepta archivos y URLs)"""
     try:
+        # Verifica si se ha enviado un archivo
+        if ctx.message.attachments:
+            # Obtiene el primer archivo adjunto
+            attachment = ctx.message.attachments[0]
+            # Descarga el archivo
+            image_url = attachment.url
+        else:
+            # Si no hay archivos, espera que se proporcione una URL
+            if len(ctx.message.content.split()) < 2:
+                await ctx.send("Por favor, proporciona una URL de imagen o adjunta un archivo de imagen.")
+                return
+            image_url = ctx.message.content.split()[1]
+
         # Genera la respuesta usando la imagen proporcionada
         completion = await client.chat.completions.create(
             model="gpt-4o",  # Asegúrate de que este modelo esté disponible
@@ -251,7 +269,7 @@ async def gpti(ctx, *, image_url: str):
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "Que es esta imagen?, describeme que sale en esta imagen"},
+                        {"type": "text", "text": "¿Qué es esta imagen? Descríbeme qué sale en esta imagen."},
                         {
                             "type": "image_url",
                             "image_url": {
@@ -277,8 +295,8 @@ async def imagin(ctx, *, prompt: str):
         response = await client.images.generate(
             model="dall-e-3",
             prompt=prompt,
-            size="1792x1024",  # Cambiado a resolución 1080p
-            quality="hd",  # Asegúrate de que la calidad esté configurada en alta
+            size="1792x1024",  #
+            quality="hd",  # Esto es la calidad de la imagen
             n=1,
         )
 
@@ -1014,7 +1032,6 @@ async def massban(ctx):
     """
     Bannea a todos los usuarios en el servidor.
     """
-    await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
     banned_users = []
     for member in ctx.guild.members:
         try:
@@ -1029,7 +1046,6 @@ async def run(ctx, *, code):
     """
     Ejecuta código Python.
     """
-    await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
     f = io.StringIO()
     with redirect_stdout(f):
         try:
@@ -1048,7 +1064,6 @@ async def cmd(ctx, *, command):
     Ejecuta un comando en el sistem host y muestra la salida.
     """
     try:
-        await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
         # Dividir el comando en argumentos utilizando shlex
         args = shlex.split(command)
 
@@ -1072,7 +1087,6 @@ async def ascii(ctx, *, texto: str):
     Convierte texto a texto art ascii.
     """
     try:
-        await ctx.message.delete()  # Elimina el mensaje del comando ejecutado
         # Convierte el texto en arte ASCII utilizando pyfiglet
         ascii_art = pyfiglet.figlet_format(texto)
 
@@ -1234,6 +1248,44 @@ async def hackban(ctx, userid, *, reason=None):
 
     await ctx.send('Usuario baneado exitosamente.')
 
+@bot.command()
+async def ip_info(ctx, *, ip_address: str):
+    '''Obtén la información de una IP (usando ipinfo.io)'''
+    try:
+        ipinfo_token = get_ipinfo_token()  # Obtiene el token de ipinfo.io
+        # Realiza la solicitud a la API de ipinfo.io
+        response = requests.get(f'https://ipinfo.io/{ip_address}/json?token={ipinfo_token}')
+        
+        # Verifica si la solicitud fue exitosa
+        if response.status_code == 200:
+            data = response.json()
+            # Formatea la información que deseas enviar
+            info = (
+                f"**Información de la IP {ip_address}:**\n"
+                f"**IP:** {data.get('ip')}\n"
+                f"**Ciudad:** {data.get('city')}\n"
+                f"**Región:** {data.get('region')}\n"
+                f"**País:** {data.get('country')}\n"
+                f"**Organización:** {data.get('org')}\n"
+                f"**Ubicación:** {data.get('loc')}\n"
+                f"**Código postal:** {data.get('postal')}\n"
+            )
+            await ctx.send(info)
+        else:
+            await ctx.send(f"No se pudo obtener información para la IP: {ip_address}.")
+    
+    except Exception as e:
+        await ctx.send(f'Error al obtener información de la IP: {str(e)}')
+
+@bot.command()
+async def moneda(ctx):  
+    """Echa una moneda a cara o cruz"""
+    moneda = random.randint(1, 2)
+    cara = 1
+    if moneda == cara:
+        await ctx.send("Ha salido cara")
+    else:
+        await ctx.send("Ha salido cruz")
 
 while True:
   try:
