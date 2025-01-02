@@ -10,7 +10,7 @@ COPY main.py /app/main.py
 COPY token.txt /app/token.txt
 COPY token_open.txt /app/token_open.txt
 COPY status.txt /app/status.txt
-
+COPY ipinfo_token.txt /app/status.txt
 # Establecer el directorio de trabajo
 WORKDIR /app
 
